@@ -196,7 +196,7 @@ init([Size, Opts]) ->
 
 
 %% @private
-handle_call({add, {Key, _Value} = Entry}, _From, Cache) ->
+handle_call({add, {Key, _Value} = Entry}, From, Cache) ->
     case ets:lookup(Cache#cache.items, Key) of
         [] ->
             %% add new item
@@ -204,19 +204,20 @@ handle_call({add, {Key, _Value} = Entry}, _From, Cache) ->
             EvictList = push_front(Cache#cache.evict_list, Entry),
             Cache1 = Cache#cache{evict_list=EvictList},
             %% check if the size is not exceeded
-            {Evict, Cache2} = if
-                                      length(EvictList) > Cache#cache.size ->
-                                          {true, remove_oldest1(Cache1)};
-                                      true ->
-                                          {false, Cache1}
-                                  end,
-            {reply, Evict, Cache2};
+            if
+                length(EvictList) > Cache#cache.size ->
+                    gen_server:reply(From, true),
+                    {noreply, remove_oldest1(Cache1)};
+                true ->
+                    {reply, false, Cache1}
+            end;
         [{_Key, _Value}] ->
+            gen_server:reply(From, false),
             %% add new value
             true = ets:insert(Cache#cache.items, Entry),
             %% move old entry to front
             EvictList = move_front(Cache#cache.evict_list, Entry),
-            {reply, false, Cache#cache{evict_list=EvictList}}
+            {noreply, Cache#cache{evict_list=EvictList}}
     end;
 
 
@@ -239,19 +240,19 @@ handle_call({peek, Key, Default}, _From, Cache) ->
 handle_call({contains, Key}, _From, Cache) ->
     {reply, ets:member(Cache#cache.items, Key), Cache};
 
-handle_call({contains_or_add, Entry}, _from, Cache) ->
+handle_call({contains_or_add, Entry}, From, Cache) ->
     case ets:insert_new(Cache#cache.items, Entry) of
         true ->
             EvictList = push_front(Cache#cache.evict_list, Entry),
             Cache1 = Cache#cache{evict_list=EvictList},
             % check if the size is not exceeded
-            {Evict, Cache2} = if
-                                      length(EvictList) > Cache#cache.size ->
-                                          {true, remove_oldest1(Cache1)};
-                                      true ->
-                                          {false, Cache1}
-                                  end,
-            {reply, {false, Evict}, Cache2};
+            if
+                length(EvictList) > Cache#cache.size ->
+                    gen_server:reply(From, {false, true}),
+                    {noreply, remove_oldest1(Cache1)};
+                true ->
+                    {reply, {false, false}, Cache1}
+            end;
         false ->
             {reply, {true, false}, Cache}
     end;
