@@ -21,7 +21,7 @@ It's usage is very simple.
 ```erlang
 
 Size = 128,
-Cache = lru:start(Cache),
+{ok, Cache} = lru:start(Size),
 
 lru:add(Cache, 1, 1),
 lru:add(Cache, 2, 2),
