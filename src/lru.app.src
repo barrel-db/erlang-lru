@@ -1,6 +1,6 @@
 {application, 'lru',
  [{description, "implements a fixed-size LRU cache"},
-  {vsn, "1.1.1"},
+  {vsn, "1.2.0"},
   {registered, []},
   {applications,
    [kernel,
