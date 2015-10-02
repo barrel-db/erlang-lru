@@ -27,9 +27,9 @@ lru_option() = {evict_fun, function()} | {spawn_opt, list()}
 
 
 <table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#add-3">add/3</a></td><td>adds a value to the cache.</td></tr><tr><td valign="top"><a href="#contains-2">contains/2</a></td><td>check if the key is in the cache.</td></tr><tr><td valign="top"><a href="#contains_or_add-3">contains_or_add/3</a></td><td> checks if a key is in the cache (without updating the recent-ness or
-deleting it for being stale), if not, adds the value.</td></tr><tr><td valign="top"><a href="#get-2">get/2</a></td><td>lookup a key's value from the cache.</td></tr><tr><td valign="top"><a href="#get-3">get/3</a></td><td>lookup a key's value from the cache.</td></tr><tr><td valign="top"><a href="#keys-1">keys/1</a></td><td>return all the keys from the cache.</td></tr><tr><td valign="top"><a href="#peek-2">peek/2</a></td><td>Returns the key value (or undefined if not found) without updating the
+deleting it for being stale), if not, adds the value.</td></tr><tr><td valign="top"><a href="#get-2">get/2</a></td><td>lookup a key's value from the cache.</td></tr><tr><td valign="top"><a href="#get-3">get/3</a></td><td>lookup a key's value from the cache.</td></tr><tr><td valign="top"><a href="#info-1">info/1</a></td><td>get cache info.</td></tr><tr><td valign="top"><a href="#keys-1">keys/1</a></td><td>return all the keys from the cache.</td></tr><tr><td valign="top"><a href="#peek-2">peek/2</a></td><td>Returns the key value (or undefined if not found) without updating the
 "recently used"-ness of the key.</td></tr><tr><td valign="top"><a href="#peek-3">peek/3</a></td><td>Returns the key value (or undefined if not found) without updating the
-"recently used"-ness of the key.</td></tr><tr><td valign="top"><a href="#purge-1">purge/1</a></td><td>purge all items from the cache.</td></tr><tr><td valign="top"><a href="#remove-2">remove/2</a></td><td>remove a key from the cache.</td></tr><tr><td valign="top"><a href="#remove_oldest-1">remove_oldest/1</a></td><td>remove the oldest item from the cache.</td></tr><tr><td valign="top"><a href="#size-1">size/1</a></td><td>get the number of items in the cache.</td></tr><tr><td valign="top"><a href="#start-1">start/1</a></td><td>creates an LRU of the given size.</td></tr><tr><td valign="top"><a href="#start-2">start/2</a></td><td>creates an LRU of the given size
+"recently used"-ness of the key.</td></tr><tr><td valign="top"><a href="#purge-1">purge/1</a></td><td>purge all items from the cache.</td></tr><tr><td valign="top"><a href="#remove-2">remove/2</a></td><td>remove a key from the cache.</td></tr><tr><td valign="top"><a href="#remove_oldest-1">remove_oldest/1</a></td><td>remove the oldest item from the cache.</td></tr><tr><td valign="top"><a href="#set_size-2">set_size/2</a></td><td>change the size of the cache.</td></tr><tr><td valign="top"><a href="#size-1">size/1</a></td><td>get the number of items in the cache.</td></tr><tr><td valign="top"><a href="#start-1">start/1</a></td><td>creates an LRU of the given size.</td></tr><tr><td valign="top"><a href="#start-2">start/2</a></td><td>creates an LRU of the given size
 Options are:
 - <code>{evict_fun, Fun}</code> a function that will received the evicted key value
 "fun(Key, Value)".</td></tr><tr><td valign="top"><a href="#start-3">start/3</a></td><td>creates an LRU of the given size with a registered name.</td></tr><tr><td valign="top"><a href="#start_link-1">start_link/1</a></td><td>creates an LRU of the given size as part of a supervision tree.</td></tr><tr><td valign="top"><a href="#start_link-2">start_link/2</a></td><td>creates an LRU of the given size as part of a supervision tree.</td></tr><tr><td valign="top"><a href="#start_link-3">start_link/3</a></td><td>creates an LRU of the given size as part of a supervision tree with a
@@ -99,6 +99,17 @@ get(Cache::pid(), Key::term(), Default::term()) -&gt; term()
 lookup a key's value from the cache. Return the Default value if it's
 not found.
 
+<a name="info-1"></a>
+
+### info/1 ###
+
+<pre><code>
+info(Cache::pid()) -&gt; Info::list()
+</code></pre>
+<br />
+
+get cache info
+
 <a name="keys-1"></a>
 
 ### keys/1 ###
@@ -166,6 +177,17 @@ remove_oldest(Cache::pid()) -&gt; ok
 <br />
 
 remove the oldest item from the cache
+
+<a name="set_size-2"></a>
+
+### set_size/2 ###
+
+<pre><code>
+set_size(Cache::pid(), Size::non_neg_integer()) -&gt; ok
+</code></pre>
+<br />
+
+change the size of the cache
 
 <a name="size-1"></a>
 

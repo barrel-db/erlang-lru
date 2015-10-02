@@ -20,3 +20,6 @@ test:
 #
 dialyzer:
 	$(REBAR) dialyzer
+
+
+.PHONY: doc

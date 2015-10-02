@@ -4,11 +4,11 @@
 
 Copyright (c) 2015 Benoît Chesneau.
 
-__Version:__ 1.0.0.
+__Version:__ 1.1.0.
 
 ## Erlang LRU
 
-Erlang LRU implements a fixed size [LRU cache](https://en.wikipedia.org/wiki/Cache_algorithms#LRU).
+Erlang LRU implements a fixed size [LRU cache]((https://en.wikipedia.org/wiki/Cache_algorithms#LRU)).
 
 The cache is maintained in a process that could be added to a supervision
 tree.
@@ -36,4 +36,7 @@ Full doc is available in the [`lru`](http://github.com/barrel-db/erlang-lru/blob
 
 ## Build
 
+```
 $ rebar3 compile
+```
+
