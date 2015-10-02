@@ -1,3 +1,9 @@
+%%% -*- erlang -*-
+%%%
+%%% This file is part of erlang-lru released under the BSD license.
+%%%
+%%% Copyright (c) 2015 Benoît Chesneau <benoitc@e-engura.org>
+%%%
 -module('lru').
 -behaviour(gen_server).
 
