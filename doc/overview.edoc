@@ -26,7 +26,12 @@ lru:remove(Cache, 2),
 
 </pre>
 
-Build
------
+## Documentation
+
+Full doc is available in the {@link lru} module.
+
+## Build
 
     $ rebar3 compile
+
+@end

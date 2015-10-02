@@ -28,7 +28,10 @@ lru:add(Cache, 2, 2),
 lru:remove(Cache, 2),
 ```
 
-Build
------
+## Documentation
+
+Full doc is available in the [`lru`](http://github.com/barrel-db/erlang-lru/blob/master/doc/lru.md) module.
+
+## Build
 
 $ rebar3 compile
