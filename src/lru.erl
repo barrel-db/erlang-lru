@@ -19,7 +19,9 @@
          remove/2,
          remove_oldest/1,
          purge/1,
-         size/1]).
+         size/1,
+         info/1,
+         set_size/2]).
 
 %% API exports
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
@@ -167,6 +169,15 @@ purge(Cache) ->
     call(Cache, purge).
 
 
+%% @doc get cache info
+-spec info(Cache::pid()) -> Info::list().
+info(Cache) ->
+    call(Cache, info).
+
+%% @doc change the size of the cache
+-spec set_size(Cache::pid(), Size::non_neg_integer()) -> ok.
+set_size(Cache, Size) ->
+    gen_server:cast(Cache, {set_size, Size}).
 
 %%====================================================================
 %% Internal functions
@@ -266,10 +277,19 @@ handle_call(purge, _From, Cache) ->
                   end, Cache#cache.evict_list),
     {reply, ok, Cache#cache{evict_list=[]}};
 
+handle_call(info, _From, Cache) ->
+    #cache{size=Max, evict_list=EvictList} = Cache,
+    Info = [{max_size, Max},
+            {size, length(EvictList)}],
+    {reply, Info, Cache};
+
 handle_call(stop, _From, Cache) ->
     {stop, normal, ok, Cache}.
 
 %% @private
+handle_cast({set_size, Sz}, Cache) ->
+    {noreply, Cache#cache{size=Sz}};
+
 handle_cast(_Msg, Cache) ->
     {noreply, Cache}.
 
@@ -430,7 +450,29 @@ lru_peek_test() ->
     lru:add(Cache, 2, 2),
     ?assertEqual(lru:peek(Cache, 1), 1),
     lru:add(Cache, 3, 3),
-    ?assert(lru:contains(Cache, 1) =:= false).
+    ?assert(lru:contains(Cache, 1) =:= false),
+    lru:stop(Cache),
+    ok.
+
+
+lru_info_test() ->
+    {ok, Cache} = lru:start_link(2),
+    lru:add(Cache, 1, 1),
+    lru:add(Cache, 2, 2),
+    ?assertEqual(lru:info(Cache), [{max_size, 2}, {size, 2}]),
+    lru:stop(Cache),
+    ok.
+
+lru_set_size_test() ->
+    {ok, Cache} = lru:start_link(2),
+    lru:add(Cache, 1, 1),
+    lru:add(Cache, 2, 2),
+    ?assertEqual(lru:info(Cache), [{max_size, 2}, {size, 2}]),
+    lru:set_size(Cache, 3),
+    ?assertEqual(lru:info(Cache), [{max_size, 3}, {size, 2}]),
+    lru:stop(Cache),
+    ok.
+
 
 
 -endif.
