@@ -4,10 +4,8 @@ PLT=.hackney.plt
 
 all: build
 
-dev: devbuild
-
-doc: dev
-	$(REBAR) as dev edoc
+doc:
+	$(REBAR) edoc
 
 clean:
 	$(REBAR) clean
@@ -20,11 +18,5 @@ test:
 
 # development
 #
-devclean:
-	$(REBAR) as dev clean
-
-devbuild:
-	$(REBAR) as dev compile
-
 dialyzer:
 	$(REBAR) dialyzer

@@ -26,6 +26,8 @@ Size = 128,
 lru:add(Cache, 1, 1),
 lru:add(Cache, 2, 2),
 lru:remove(Cache, 2),
+
+...
 ```
 
 ## Documentation
