@@ -9,7 +9,7 @@
   {env,[]},
   {modules, []},
 
-  {contributors, []},
-  {licenses, []},
-  {links, []}
+  {contributors, ["Benoit Chesneau"]},
+  {licenses, ["BSD"]},
+  {links, [{"Github", "https://github.com/barrel-db/erlang-lru"}]}
  ]}.
