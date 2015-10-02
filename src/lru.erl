@@ -21,7 +21,8 @@
          purge/1,
          size/1,
          info/1,
-         set_size/2]).
+         set_size/2,
+         resize/2]).
 
 %% API exports
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
@@ -179,6 +180,12 @@ info(Cache) ->
 set_size(Cache, Size) ->
     gen_server:cast(Cache, {set_size, Size}).
 
+%% @doc resize of the cache
+-spec resize(Cache::pid(), Size::non_neg_integer()) -> ok.
+resize(Cache, Size) ->
+    gen_server:cast(Cache, {resize, Size}).
+
+
 %%====================================================================
 %% Internal functions
 %%====================================================================
@@ -288,6 +295,18 @@ handle_call(stop, _From, Cache) ->
     {stop, normal, ok, Cache}.
 
 %% @private
+handle_cast({resize, Sz}, Cache) ->
+    if
+        Sz < Cache#cache.size ->
+            Diff = Cache#cache.size - Sz,
+            Cache2 = lists:foldl(fun(_, Cache1) ->
+                                         remove_oldest1(Cache1)
+                                 end, Cache, lists:seq(1, Diff)),
+            {noreply, Cache2#cache{size=Sz}};
+        true ->
+            {noreply, Cache#cache{size=Sz}}
+    end;
+
 handle_cast({set_size, Sz}, Cache) ->
     {noreply, Cache#cache{size=Sz}};
 
@@ -471,6 +490,10 @@ lru_set_size_test() ->
     ?assertEqual(lru:info(Cache), [{max_size, 2}, {size, 2}]),
     lru:set_size(Cache, 3),
     ?assertEqual(lru:info(Cache), [{max_size, 3}, {size, 2}]),
+    lru:add(Cache, 3, 3),
+    ?assertEqual(lru:keys(Cache), [1, 2, 3]),
+    lru:resize(Cache, 1),
+    ?assertEqual(lru:keys(Cache), [3]),
     lru:stop(Cache),
     ok.
 
