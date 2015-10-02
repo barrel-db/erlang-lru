@@ -8,7 +8,7 @@ __Version:__ 1.1.0.
 
 ## Erlang LRU
 
-Erlang LRU implements a fixed size [LRU cache]((https://en.wikipedia.org/wiki/Cache_algorithms#LRU)).
+Erlang LRU implements a fixed size [LRU cache](https://en.wikipedia.org/wiki/Cache_algorithms#LRU).
 
 The cache is maintained in a process that could be added to a supervision
 tree.
