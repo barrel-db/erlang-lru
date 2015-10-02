@@ -1,0 +1,32 @@
+@copyright 2015 Benoît Chesneau.
+@version 1.0.0.
+@title: Erlang LRU: a fixed size LRU cache.
+
+@doc
+
+## Erlang LRU
+
+Erlang LRU implements a fixed size LRU cache.
+
+The cache is maintained in a process that could be added to a supervision
+treee.
+
+Usage:
+------
+
+It's usage is very simple.
+
+<pre lang="erlang">
+Size = 128,
+Cache = lru:start(Cache),
+
+lru:add(Cache, 1, 1),
+lru:add(Cache, 2, 2),
+lru:remove(Cache, 2),
+
+</pre>
+
+Build
+-----
+
+    $ rebar3 compile

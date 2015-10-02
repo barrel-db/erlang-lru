@@ -1,0 +1,15 @@
+{application, 'lru',
+ [{description, "implements a fixed-size LRUC cache"},
+  {vsn, "1.0.0"},
+  {registered, []},
+  {applications,
+   [kernel,
+    stdlib
+   ]},
+  {env,[]},
+  {modules, []},
+
+  {contributors, []},
+  {licenses, []},
+  {links, []}
+ ]}.
