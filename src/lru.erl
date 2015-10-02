@@ -166,8 +166,8 @@ purge(Cache) ->
 %% Internal functions
 %%====================================================================
 %%
-%%
-%%
+
+%% @private
 init([Size, Opts]) ->
     EvictFun = proplists:get_value(evict_fun, Opts),
     Items = ets:new(?MODULE, [ordered_set]),
@@ -178,6 +178,7 @@ init([Size, Opts]) ->
                 evict_fun = EvictFun}}.
 
 
+%% @private
 handle_call({add, {Key, _Value} = Entry}, _From, Cache) ->
     case ets:lookup(Cache#cache.items, Key) of
         [] ->
@@ -262,16 +263,19 @@ handle_call(purge, _From, Cache) ->
 handle_call(stop, _From, Cache) ->
     {stop, normal, ok, Cache}.
 
-
+%% @private
 handle_cast(_Msg, Cache) ->
     {noreply, Cache}.
 
+%% @private
 handle_info(_Info, Cache) ->
     {noreply, Cache}.
 
+%% @private
 code_change(_OldVsn, Cache, _Extra) ->
    {ok, Cache}.
 
+%% @private
 terminate(_Reason, _Cache) ->
     ok.
 
