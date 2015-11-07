@@ -10,6 +10,9 @@ __Version:__ 1.2.0.
 
 Erlang LRU implements a fixed size [LRU cache](https://en.wikipedia.org/wiki/Cache_algorithms#LRU).
 
+[![Build Status](https://travis-ci.org/barrel-db/erlang-lru.png?branch=master)](https://travis-ci.org/barrel-db/erlang-lru)
+[![Hex pm](http://img.shields.io/hexpm/v/lru.svg?style=flat)](https://hex.pm/packages/lru)
+
 The cache is maintained in a process that could be added to a supervision
 tree.
 
