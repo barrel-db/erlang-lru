@@ -1,5 +1,5 @@
 @copyright 2015 Benoît Chesneau.
-@version 1.3.0.
+@version 1.3.1.
 @title: Erlang LRU: a fixed size LRU cache.
 
 @doc
