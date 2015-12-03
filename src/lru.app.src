@@ -9,7 +9,7 @@
   {env,[]},
   {modules, []},
 
-  {contributors, [
+  {maintainers, [
     "Benoit Chesneau",
     "Constantin Rack"]},
   {licenses, ["BSD"]},
