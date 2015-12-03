@@ -102,8 +102,7 @@ stop(Cache) ->
 %% @doc adds a value to the cache.  Returns true if an eviction occured.
 -spec add(Cache::pid(), Key::term(), Value::term()) -> true | false.
 add(Cache, Key, Value) ->
-    Entry = {Key, Value},
-    call(Cache, {add, Entry}).
+    call(Cache, {add, Key, Value}).
 
 %% @doc lookup a key's value from the cache. Return undefined if it's not
 %% found.
@@ -146,8 +145,7 @@ keys(Cache) ->
 -spec contains_or_add(Cache::pid(), Key::term(), Value::term()) ->
     {Exists::boolean(), Evict::boolean()}.
 contains_or_add(Cache, Key, Value) ->
-    Entry = {Key, Value},
-    call(Cache, {contains_or_add, Entry}).
+    call(Cache, {contains_or_add, Key, Value}).
 
 %% @doc remove a key from the cache
 -spec remove(Cache::pid(), Key::term()) -> ok.
@@ -194,73 +192,71 @@ resize(Cache, Size) ->
 %% @private
 init([Size, Opts]) ->
     EvictFun = proplists:get_value(evict_fun, Opts),
-    Items = ets:new(?MODULE, [ordered_set]),
 
     {ok, #cache{size = Size,
                 evict_list = [],
-                items = Items,
+                items = #{},
                 evict_fun = EvictFun}}.
 
 
 %% @private
-handle_call({add, {Key, _Value} = Entry}, From, Cache) ->
-    case ets:lookup(Cache#cache.items, Key) of
-        [] ->
+handle_call({add, Key, Value}, From, Cache) ->
+    #cache{items=Items, evict_list=Evicted} = Cache,
+
+    case maps:find(Key, Items) of
+        error ->
             %% add new item
-            true = ets:insert(Cache#cache.items, Entry),
-            EvictList = push_front(Cache#cache.evict_list, Entry),
-            Cache1 = Cache#cache{evict_list=EvictList},
+            Items2 = maps:put(Key, Value, Items),
+            Evicted2 = push_front(Evicted, {Key, Value}),
+            Cache1 = Cache#cache{items=Items2, evict_list=Evicted2},
             %% check if the size is not exceeded
             if
-                length(EvictList) > Cache#cache.size ->
+                length(Evicted2) > Cache#cache.size ->
                     gen_server:reply(From, true),
                     {noreply, remove_oldest1(Cache1)};
                 true ->
                     {reply, false, Cache1}
             end;
-        [{_Key, _Value}] ->
+        {ok, _Value} ->
             gen_server:reply(From, false),
             %% add new value
-            true = ets:insert(Cache#cache.items, Entry),
+            Items2 = maps:put(Key, Value, Items),
             %% move old entry to front
-            EvictList = move_front(Cache#cache.evict_list, Entry),
-            {noreply, Cache#cache{evict_list=EvictList}}
+            Evicted2 = move_front(Evicted, {Key, Value}),
+            {noreply, Cache#cache{items=Items2, evict_list=Evicted2}}
     end;
 
 
 handle_call({get, Key, Default}, _From, Cache) ->
-    case ets:lookup(Cache#cache.items, Key) of
-        [] ->
-            {reply, Default, Cache};
-        [{_Key, Value}=Entry] ->
-            EvictList = move_front(Cache#cache.evict_list, Entry),
-            {reply, Value, Cache#cache{evict_list=EvictList}}
+    case maps:find(Key, Cache#cache.items) of
+        {ok, Value} ->
+            Evicted2 =  move_front(Cache#cache.evict_list, {Key, Value}),
+            {reply, Value, Cache#cache{evict_list=Evicted2}};
+        error ->
+            {reply, Default, Cache}
     end;
 
 handle_call({peek, Key, Default}, _From, Cache) ->
-    Ret = case ets:lookup(Cache#cache.items, Key) of
-        [] ->  Default;
-        [{_Key, Value}] -> Value
-    end,
-    {reply, Ret, Cache};
+    {reply, maps:get(Key, Cache#cache.items, Default), Cache};
 
 handle_call({contains, Key}, _From, Cache) ->
-    {reply, ets:member(Cache#cache.items, Key), Cache};
+    {reply, maps:is_key(Key, Cache#cache.items), Cache};
 
-handle_call({contains_or_add, Entry}, From, Cache) ->
-    case ets:insert_new(Cache#cache.items, Entry) of
-        true ->
-            EvictList = push_front(Cache#cache.evict_list, Entry),
-            Cache1 = Cache#cache{evict_list=EvictList},
-            % check if the size is not exceeded
+handle_call({contains_or_add, Key, Value}, From, Cache) ->
+    case maps:is_key(Key, Cache#cache.items) of
+        false ->
+            #cache{items=Items, evict_list=Evicted} = Cache,
+            Items2 = maps:put(Key, Value, Items),
+            Evicted2 = push_front(Evicted, {Key, Value}),
+            Cache1 = Cache#cache{items=Items2, evict_list=Evicted2},
             if
-                length(EvictList) > Cache#cache.size ->
+                length(Evicted2) > Cache#cache.size ->
                     gen_server:reply(From, {false, true}),
                     {noreply, remove_oldest1(Cache1)};
                 true ->
                     {reply, {false, false}, Cache1}
             end;
-        false ->
+        true ->
             {reply, {true, false}, Cache}
     end;
 
@@ -280,10 +276,7 @@ handle_call(size, _From, Cache) ->
     {reply, Sz, Cache};
 
 handle_call(purge, _From, Cache) ->
-    lists:foreach(fun(Key) ->
-                          remove_item(Key, Cache)
-                  end, Cache#cache.evict_list),
-    {reply, ok, Cache#cache{evict_list=[]}};
+    {reply, ok, Cache#cache{items=#{}, evict_list=[]}};
 
 handle_call(info, _From, Cache) ->
     #cache{size=Max, evict_list=EvictList} = Cache,
@@ -340,24 +333,25 @@ move_front(List, {Key, _Value}) ->
 
 remove_oldest1(Cache) ->
     Last = lists:last(Cache#cache.evict_list),
-    remove_item(Last, Cache),
-    Cache#cache{evict_list=lists:droplast(Cache#cache.evict_list)}.
+    Cache1 = remove_item(Last, Cache),
+    Cache1#cache{evict_list=lists:droplast(Cache#cache.evict_list)}.
 
 remove_element(Key, Cache) ->
-    remove_item(Key, Cache),
-    Cache#cache{evict_list=lists:delete(Key, Cache#cache.evict_list)}.
+    Cache1 = remove_item(Key, Cache),
+    Cache1#cache{evict_list=lists:delete(Key, Cache#cache.evict_list)}.
 
-remove_item(Key, Cache) ->
-    case Cache#cache.evict_fun of
+remove_item(Key, #cache{items=Items, evict_fun=EvictFun}=Cache) ->
+    case EvictFun of
         undefined ->
-            ets:delete(Cache#cache.items, Key),
-
-            ok;
-        Fun ->
-            case ets:take(Cache#cache.items, Key) of
-                [] -> ok;
-                [{Key, Value}] -> Fun(Key, Value)
-            end
+            Cache#cache{items=maps:remove(Key, Items)};
+        _ ->
+            case maps:find(Key, Items) of
+                {ok, Value} ->
+                    EvictFun(Key, Value);
+                error ->
+                    ok
+            end,
+            Cache#cache{items=maps:remove(Key, Items)}
     end.
 
 
@@ -368,7 +362,6 @@ lru_test() ->
 
     _ = ets:new(lru_test, [named_table, ordered_set, public]),
     ets:insert_new(lru_test, {evict_count, 0}),
-
     EvictFun = fun(Key, Value) ->
                        if
                            Key /= Value ->
