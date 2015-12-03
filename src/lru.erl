@@ -207,7 +207,7 @@ handle_call({add, Key, Value}, From, Cache) ->
         error ->
             %% add new item
             Items2 = maps:put(Key, Value, Items),
-            Evicted2 = push_front(Evicted, {Key, Value}),
+            Evicted2 = push_front(Evicted, Key),
             Cache1 = Cache#cache{items=Items2, evict_list=Evicted2},
             %% check if the size is not exceeded
             if
@@ -222,7 +222,7 @@ handle_call({add, Key, Value}, From, Cache) ->
             %% add new value
             Items2 = maps:put(Key, Value, Items),
             %% move old entry to front
-            Evicted2 = move_front(Evicted, {Key, Value}),
+            Evicted2 = move_front(Evicted, Key),
             {noreply, Cache#cache{items=Items2, evict_list=Evicted2}}
     end;
 
@@ -230,7 +230,7 @@ handle_call({add, Key, Value}, From, Cache) ->
 handle_call({get, Key, Default}, _From, Cache) ->
     case maps:find(Key, Cache#cache.items) of
         {ok, Value} ->
-            Evicted2 =  move_front(Cache#cache.evict_list, {Key, Value}),
+            Evicted2 =  move_front(Cache#cache.evict_list, Key),
             {reply, Value, Cache#cache{evict_list=Evicted2}};
         error ->
             {reply, Default, Cache}
@@ -247,7 +247,7 @@ handle_call({contains_or_add, Key, Value}, From, Cache) ->
         false ->
             #cache{items=Items, evict_list=Evicted} = Cache,
             Items2 = maps:put(Key, Value, Items),
-            Evicted2 = push_front(Evicted, {Key, Value}),
+            Evicted2 = push_front(Evicted, Key),
             Cache1 = Cache#cache{items=Items2, evict_list=Evicted2},
             if
                 length(Evicted2) > Cache#cache.size ->
@@ -323,11 +323,11 @@ call(Cache, Msg) ->
     gen_server:call(Cache, Msg).
 
 
-push_front(List, {Key, _Value}) ->
+push_front(List, Key) ->
     [Key | List].
 
 
-move_front(List, {Key, _Value}) ->
+move_front(List, Key) ->
     [Key | lists:delete(Key, List)].
 
 
