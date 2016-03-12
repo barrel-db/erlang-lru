@@ -41,7 +41,7 @@ maybe_evict(Cache) ->
     if
         TSz =< Sz -> false;
         true ->
-            Start = random_key(Tab, rand:uniform(TSz) -1),
+            Start = key_at(Tab, rand:uniform(TSz) -1),
             {Pool, _} = ets:select(Tab, [{{'$1', {'$2', '$3'}},
                                           [{'>=', '$1', Start}],
                                           ['$_']}],
@@ -77,8 +77,9 @@ ts() ->
     {Time, UMI}.
 
 
-random_key(Tab, Pos) when Pos < 0 ->
-    random_key(Tab, 0);
-random_key(Tab, Pos) ->
+
+key_at(Tab, Pos) when Pos < 0 ->
+    key_at(Tab, 0);
+key_at(Tab, Pos) ->
     [{K, _}] = ets:slot(Tab, Pos),
     K.
